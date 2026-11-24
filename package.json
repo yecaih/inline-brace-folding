@@ -4,6 +4,11 @@
   "description": "Bracket-first folding for multiline braces and parentheses in any language.",
   "version": "0.3.1",
   "publisher": "flamekm",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yecaih/inline-brace-folding.git"
+  },
   "engines": {
     "vscode": "^1.99.0"
   },

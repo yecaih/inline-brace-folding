@@ -1,10 +1,32 @@
 # Inline Brace Folding
 
-在 VS Code 里把可安全折叠的多行 `{}` 和 `()` 显示为 `{⋯}` 和 `(⋯)`。底色只在占位符上，点击省略号或原生折叠箭头可以展开；插件不修改源码。
+[![VS Code ≥ 1.99](https://img.shields.io/badge/VS%20Code-%E2%89%A51.99-007ACC)](https://code.visualstudio.com/) [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-## 安装和启用
+一个让 VS Code 把多行花括号和圆括号折成 **`{⋯}`** 和 **`(⋯)`** 的扩展。收起函数体、循环和长参数列表后，仍能看出括号边界；折叠只改变显示，不修改源码。
 
-用 `Extensions: Install from VSIX...` 安装 `inline-brace-folding-0.3.1.vsix`。在**用户设置**或**项目的 `.vscode/settings.json`** 里选中本插件：
+![VS Code 折叠效果：左侧展开源码，右侧将循环体折为 {⋯}、将跨行调用折为 (⋯)](docs/folding-preview.png)
+
+*同一段 C++ 代码，左侧展开，右侧折叠。*
+
+## 功能
+
+- **保留括号和标点。** 安全的闭合行会被折入占位符，同时保留 `);`、`};` 等结尾。单行括号和 `[]` 不新增折叠。
+- **沿用原生交互。** 用侧栏箭头或 VS Code 的折叠命令收起，点击省略号或侧栏箭头展开。
+- **兼容语言服务。** 选为默认提供者后，可补充 clangd（C/C++）和 rust-analyzer（Rust）提供的不冲突折叠范围，例如注释和导入；与括号范围冲突时，优先保留括号范围。
+
+## 从源码安装
+
+需要 VS Code **1.99+** 和 Node.js **22+**。
+
+```sh
+npm ci
+npx --yes @vscode/vsce@4.1.1 package --no-dependencies
+code --install-extension ./inline-brace-folding-0.3.1.vsix
+```
+
+也可以在 VS Code 命令面板运行 `Extensions: Install from VSIX...`，选择生成的 `.vsix` 文件。
+
+在**用户设置**或项目的 `.vscode/settings.json` 中选中本扩展：
 
 ```json
 {
@@ -14,30 +36,25 @@
 }
 ```
 
-上述写法适用于所有语言。只想在特定语言启用，就把选项放进对应语言的设置块（如 `"[cpp]"`、`"[rust]"`）；已有语言块时，在原块里改，避免旧设置覆盖。改完后展开再折叠，必要时执行 `Developer: Reload Window`。
+只想在某种语言里启用？把上面的选项放进对应的语言设置块，例如 `"[cpp]"` 或 `"[rust]"`。修改后可以先展开再折叠；必要时运行 `Developer: Reload Window`。
 
-## 折叠规则
+## 已知限制
 
-- **括号优先。** 本插件识别多行 `{}` 和 `()`，不为单行括号或 `[]` 新建折叠。安全的闭合行会被整个折入，即使没有文件末尾换行；`);`、`};` 里的标点保留在括号后。扫描器不是各语言的完整解析器，遇到语言特有的字符串、注释或其他语法时可能跳过或识别不准。
-- **其他范围只显示 `⋯`。** clangd（C/C++）和 rust-analyzer（Rust）提供的注释、导入及其他不冲突范围保留原有边界。同一行或交叉范围发生冲突时，保留本插件的括号范围。语言服务返回空列表也不会取消括号折叠。
-- **默认提供者是独占设置，不是 VS Code 的合并优先级。** 选本插件后，不会自动保留尚未适配的语言引擎或 VS Code 缩进折叠。删除该设置即可恢复 VS Code 自选提供者；C、C++ 和 Rust 仍保留兼容模式，但不保证本插件的范围优先。
-- **不隐藏共享行上的其他代码。** 如果闭合行还含 `} else {`、`) {`、注释或表达式，或开括号后还有代码，VS Code 的按行折叠无法只隐藏该行的一部分。这时保留实际闭合行，可折叠的中间部分只显示 `⋯`。
-- **占位符靠可见行推断。** VS Code 没有公开的折叠状态接口。视口边缘或打开已折叠的文件时，有可能只看到原生 `⋯`；把折叠头滚到视口内、展开再折叠可以重新推断。主题色 `inlineBraceFolding.placeholderBackground` 可调整占位符底色。
+- **折叠按行进行。** 对于 `} else {` 之类的共享行，保留原行，不会把两个分支拼成一行。闭合行上还有其他代码时，只收起能安全隐藏的中间行。
+- **默认提供者不是叠加设置。** 选用本扩展后，不会自动合并尚未适配的语言服务或 VS Code 缩进折叠。删掉 `editor.defaultFoldingRangeProvider` 可恢复 VS Code 的默认选择；C、C++ 和 Rust 仍有兼容模式，但不保证本扩展的范围优先。
+- **占位符根据可见行推断。** 视口边缘或打开已折叠文件时，可能只看到原生 `⋯`。将折叠头滚到视口内，再展开并折叠即可重新推断。主题设置 `inlineBraceFolding.placeholderBackground` 可调整占位符底色。
+- **不做完整的语言解析。** 扫描器在遇到特定语言的字符串、注释或其他语法时，可能跳过或误判括号。
 
-```mermaid
-flowchart LR
-    Scan["扫描多行 {} 和 ()"] --> Merge["优先保留括号范围"]
-    LSP["clangd / rust-analyzer"] -->|"补充不冲突范围"| Merge
-    Merge --> Fold["VS Code 原生折叠"]
-    Fold --> Preview["添加 {⋯}、(⋯) 或 ⋯"]
-```
-
-## 开发与验证
-
-打开仓库根目录 `vscode-expansion/`，在 `inline-brace-folding/` 执行 `npm ci`。F5 选 `Debug Inline Brace Folding` 可隔离其他扩展；选 `Debug Inline Brace Folding with Language Extensions` 可与已安装的 clangd 和 rust-analyzer 联调。在调试窗口打开实际项目，并在该项目配置本插件为默认提供者。
+## 开发与贡献
 
 ```sh
-npm test
-npm run test:vscode  # 本机图形版 VS Code；可用 VSCODE_TEST_BINARY 指定可执行文件
-npx --yes @vscode/vsce@4.1.1 package --no-dependencies --allow-missing-repository --skip-license
+npm ci
+npm test             # 编译并运行单元测试
+npm run test:vscode  # 在图形版 VS Code 中运行集成测试
 ```
+
+集成测试默认调用 `code`，可通过 `VSCODE_TEST_BINARY` 指定其它可执行文件。欢迎提 Issue 或 PR；反馈折叠异常时，请附上语言、最小代码片段、VS Code 版本以及启用的语言扩展。
+
+## 许可证
+
+本项目使用 [MIT License](LICENSE)。
