@@ -1,4 +1,5 @@
 .gitignore
+.archify/**
 .vscode-test/**
 node_modules/**
 scripts/**

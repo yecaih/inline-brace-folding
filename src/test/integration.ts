@@ -48,16 +48,8 @@ async function verifyFolding(sandbox: string): Promise<string[]> {
     await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
   }
 
-  const text = "void run() {\n  if (flag) {\n    work();\n  } else {\n    stop();\n  }\n}\nint next;";
-  const editor = await showDocument("cpp", text);
-  await vscode.commands.executeCommand("editor.fold", { selectionLines: [1, 3] });
-  await waitForLineVisibility(editor, 2, false);
-  await waitForLineVisibility(editor, 3, true);
-  await waitForLineVisibility(editor, 5, false);
-  await waitForLineVisibility(editor, 6, true);
-  assert.equal(editor.document.getText(), text);
-  passed.push("PASS C++: shared else line remains visible");
-  await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
+  await verifyIndependentBranchFolding();
+  passed.push("PASS C++: the shared else line remains visible and the branches fold independently");
 
   for (const suffix of ["\n", ""]) {
     await verifyTerminalFold(suffix);
@@ -72,6 +64,21 @@ async function verifyFolding(sandbox: string): Promise<string[]> {
   await verifyRustAnalyzer(sandbox, extension.id);
   passed.push("PASS rust-analyzer adapter: parentheses include the closing row, imports and refresh remain");
   return passed;
+}
+
+async function verifyIndependentBranchFolding(): Promise<void> {
+  const text = "void run() {\n  if (flag) {\n    work();\n  } else {\n    stop();\n  }\n}\nint next;";
+  const editor = await showDocument("cpp", text);
+  await vscode.commands.executeCommand("editor.fold", { selectionLines: [1, 3] });
+  await waitForLineVisibility(editor, 2, false);
+  await waitForLineVisibility(editor, 3, true);
+  await waitForLineVisibility(editor, 5, false);
+  await waitForLineVisibility(editor, 6, true);
+  await vscode.commands.executeCommand("editor.unfold", { selectionLines: [1] });
+  await waitForLineVisibility(editor, 2, true);
+  await waitForLineVisibility(editor, 5, false);
+  assert.equal(editor.document.getText(), text);
+  await vscode.commands.executeCommand("workbench.action.revertAndCloseActiveEditor");
 }
 
 async function verifyTerminalFold(suffix: string): Promise<void> {

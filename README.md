@@ -4,7 +4,7 @@
 
 ## 安装和启用
 
-用 `Extensions: Install from VSIX...` 安装 `inline-brace-folding-0.3.0.vsix`。在**用户设置**或**项目的 `.vscode/settings.json`** 里选中本插件：
+用 `Extensions: Install from VSIX...` 安装 `inline-brace-folding-0.3.1.vsix`。在**用户设置**或**项目的 `.vscode/settings.json`** 里选中本插件：
 
 ```json
 {

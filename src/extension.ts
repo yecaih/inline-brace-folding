@@ -57,8 +57,13 @@ class InlineBraceFolding implements vscode.FoldingRangeProvider, vscode.Disposab
   private readonly decoratedEditors = new WeakSet<vscode.TextEditor>();
   private readonly openingBrace = vscode.window.createTextEditorDecorationType({
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
-    color: PLACEHOLDER_FOREGROUND,
+    color: "transparent",
     backgroundColor: PLACEHOLDER_BACKGROUND,
+    before: {
+      color: PLACEHOLDER_FOREGROUND,
+      width: BRACE_WIDTH,
+      margin: `0 calc(-1 * ${BRACE_WIDTH}) 0 0`,
+    },
   });
   private readonly placeholder = vscode.window.createTextEditorDecorationType({
     rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
@@ -80,6 +85,7 @@ class InlineBraceFolding implements vscode.FoldingRangeProvider, vscode.Disposab
     after: {
       contentText: "⋯",
       color: PLACEHOLDER_FOREGROUND,
+      fontWeight: "600",
       width: "0",
       margin: `0 calc(-1 * ${NATIVE_ELLIPSIS_INSET}) 0 ${NATIVE_ELLIPSIS_INSET}`,
     },
@@ -130,12 +136,16 @@ class InlineBraceFolding implements vscode.FoldingRangeProvider, vscode.Disposab
       return;
     }
 
-    const openingRanges: vscode.Range[] = [];
+    const openingBraces: vscode.DecorationOptions[] = [];
     const placeholders: vscode.DecorationOptions[] = [];
     for (const { startLine, preview } of previews) {
-      const end = editor.document.lineAt(startLine).range.end;
+      const line = document.lineAt(startLine);
+      const end = line.range.end;
       if (preview?.openingColumn !== undefined) {
-        openingRanges.push(new vscode.Range(end.with({ character: preview.openingColumn }), end));
+        openingBraces.push({
+          range: new vscode.Range(end.with({ character: preview.openingColumn }), end),
+          renderOptions: { before: { contentText: line.text.charAt(preview.openingColumn) } },
+        });
       }
       placeholders.push({
         range: new vscode.Range(end, end),
@@ -153,7 +163,7 @@ class InlineBraceFolding implements vscode.FoldingRangeProvider, vscode.Disposab
         },
       });
     }
-    editor.setDecorations(this.openingBrace, openingRanges);
+    editor.setDecorations(this.openingBrace, openingBraces);
     editor.setDecorations(this.placeholder, placeholders);
     editor.setDecorations(this.ellipsisFallback, placeholders.map(placeholder => placeholder.range));
     this.decoratedEditors.add(editor);
