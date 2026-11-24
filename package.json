@@ -1,0 +1,43 @@
+{
+  "name": "inline-brace-folding",
+  "displayName": "Inline Brace Folding",
+  "description": "Bracket-first folding for multiline braces and parentheses in any language.",
+  "version": "0.3.0",
+  "publisher": "flamekm",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onLanguage"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configurationDefaults": {
+      "[c]": { "editor.foldingHighlight": false },
+      "[cpp]": { "editor.foldingHighlight": false },
+      "[rust]": { "editor.foldingHighlight": false }
+    },
+    "colors": [
+      {
+        "id": "inlineBraceFolding.placeholderBackground",
+        "description": "Background of inline brace folding placeholders.",
+        "defaults": {
+          "light": "#00000014",
+          "dark": "#FFFFFF20",
+          "highContrast": "#FFFFFF33",
+          "highContrastLight": "#00000026"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node --test out/test/*.test.js",
+    "test:vscode": "npm run compile && node scripts/test-vscode.cjs",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "1.99.0",
+    "typescript": "^5.8.2"
+  }
+}

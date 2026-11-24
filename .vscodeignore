@@ -1,0 +1,10 @@
+.gitignore
+.vscode-test/**
+node_modules/**
+scripts/**
+src/**
+out/test/**
+out/**/*.js.map
+tsconfig.json
+package-lock.json
+*.vsix
